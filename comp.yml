@@ -1,0 +1,47 @@
+services:
+  frontend:
+    build: ./frontend
+    image: fr:v1
+    container_name: fcont
+    depends_on:
+      - backend
+    networks:
+      - A
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+
+  backend:
+    build: ./backend
+    image: bck:v1
+    container_name: bcont
+    depends_on:
+      - database
+    networks:
+      - A
+    restart: unless-stopped
+    ports:
+      - "5050:5000"
+
+  database:
+    build: ./database
+    image: db:v1
+    container_name: dbcont
+    networks:
+      - A
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+
+networks:
+  A:
+    driver: bridge
+
+volumes:
+  postgres_data:

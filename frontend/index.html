@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DeployWatch</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #0f172a;
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 700px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 42px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            margin-bottom: 35px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            background: #1e293b;
+            padding: 10px;
+            border-radius: 14px;
+        }
+
+        input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: white;
+            font-size: 16px;
+            padding: 12px;
+        }
+
+        button {
+            border: none;
+            border-radius: 10px;
+            padding: 12px 25px;
+            background: #2563eb;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .card {
+            margin-top: 25px;
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 25px;
+            text-align: left;
+            display: none;
+        }
+
+        .status {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .healthy {
+            color: #22c55e;
+        }
+
+        .down {
+            color: #ef4444;
+        }
+
+        .details {
+            color: #cbd5e1;
+            line-height: 1.8;
+        }
+
+        .loading {
+            color: #facc15;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>DeployWatch</h1>
+
+    <div class="subtitle">
+        Monitor any website's health and response time
+    </div>
+
+    <div class="search-box">
+        <input
+            id="urlInput"
+            type="text"
+            placeholder="https://example.com"
+        >
+
+        <button onclick="checkWebsite()">
+            Check
+        </button>
+    </div>
+
+    <div id="result" class="card"></div>
+
+</div>
+
+<script>
+
+async function checkWebsite() {
+
+    const url = document.getElementById("urlInput").value.trim();
+    const result = document.getElementById("result");
+
+    if (!url) {
+        result.style.display = "block";
+        result.innerHTML = "Please enter a website URL.";
+        return;
+    }
+
+    result.style.display = "block";
+    result.innerHTML = `
+        <div class="status loading">
+            Checking website...
+        </div>
+    `;
+
+    try {
+
+        const response = await fetch(
+            `/api/check?url=${encodeURIComponent(url)}`
+        );
+
+        const data = await response.json();
+
+        if (data.healthy) {
+
+            result.innerHTML = `
+                <div class="status healthy">
+                    ● HEALTHY
+                </div>
+
+                <div class="details">
+                    <b>Website:</b> ${data.url}<br>
+                    <b>Status:</b> ${data.status}<br>
+                    <b>Response time:</b> ${data.response_time} ms
+                </div>
+            `;
+
+        } else {
+
+            result.innerHTML = `
+                <div class="status down">
+                    ● DOWN
+                </div>
+
+                <div class="details">
+                    <b>Website:</b> ${data.url}<br>
+                    ${data.error || "Website is unreachable"}
+                </div>
+            `;
+        }
+
+    } catch (error) {
+
+        result.innerHTML = `
+            <div class="status down">
+                ● BACKEND UNAVAILABLE
+            </div>
+
+            <div class="details">
+                The monitoring backend cannot be reached.
+            </div>
+        `;
+    }
+}
+
+</script>
+
+</body>
+</html>
