@@ -1,0 +1,49 @@
+name: Build and Test
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker images
+        run: docker compose -f comp.yml build
+
+      - name: Start containers
+        run: docker compose -f comp.yml up -d
+
+      - name: Check containers
+        run: docker compose -f comp.yml ps
+
+      - name: Test backend
+        run: curl --fail http://localhost:5050/api/health
+
+      - name: Test frontend
+        run: curl --fail http://localhost:8000
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Tag images
+        run: |
+          docker tag fr:v1 ${{ secrets.DOCKER_USERNAME }}/healthapp-frontend:v1
+          docker tag bck:v1 ${{ secrets.DOCKER_USERNAME }}/healthapp-backend:v1
+          docker tag db:v1 ${{ secrets.DOCKER_USERNAME }}/healthapp-database:v1
+
+      - name: Push images
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/healthapp-frontend:v1
+          docker push ${{ secrets.DOCKER_USERNAME }}/healthapp-backend:v1
+          docker push ${{ secrets.DOCKER_USERNAME }}/healthapp-database:v1
+
+      
